@@ -1,0 +1,2 @@
+this file must be ignored from git
+and it's not tracked or commited
