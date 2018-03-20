@@ -1,0 +1,3 @@
+#For more info about globbing :https://en.wikipedia.org/wiki/Glob_(programming)
+testignoredfile.txt
+*.jpg
