@@ -11,10 +11,18 @@ mohssine change 4
 test diff
 new change for test diff
 
+<<<<<<< HEAD
 this change made on the master branche
 to test the git branching
 
 Secend change master branch to test branching
+||||||| merged common ancestors
+
+=======
+this change made to test create branch on
+a Previous Commit ;the code is:
+git branch msSecBr 08db7d2
+>>>>>>> msSecbr
 
 
 
