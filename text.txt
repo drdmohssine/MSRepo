@@ -1,6 +1,6 @@
 Hooooooo Haaaaaaaaaaaa
 to make merge without conflict ,the change must be on differnet commits
-text 1
+text 1 change on git hub
 change makes on github
 chng 2
 change on local-------------
