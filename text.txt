@@ -1,3 +1,5 @@
+Hooooooo Haaaaaaaaaaaa
+to make merge without conflict ,the change must be on differnet commits
 text 1
 
 chng 2
