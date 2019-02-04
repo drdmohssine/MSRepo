@@ -6,7 +6,7 @@ Set-VMFirmware -VMName "TestVM" -EnableSecureBoot Off
 $User = "Administrator"
 $PWord = ConvertTo-SecureString -String "Passw0rd!" -AsPlainText -Force
 $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $User, $PWord
-$vmlist=get-vm |where name -Match 'VM-'
+
 
 Invoke-Command -ScriptBlock {
  C:\Windows\System32\Sysprep\sysprep.exe /generalize /shutdown /oobe
@@ -31,7 +31,7 @@ for ($i = 10; $i -le 14; $i++)
   Start-VM -VMName "VM-$i"
 }
 
-
+$vmlist=get-vm |where name -Match 'VM-'
 for ($i = 10; $i -le 14; $i++)
 { 
 
