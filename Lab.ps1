@@ -1,4 +1,3 @@
-
 #sdn02
 Set-WinUserLanguageList -LanguageList en-us,fr-fr -Force
 New-VM -Name "TestVM" -Generation 2 -VHDPath "C:\ClusterStorage\Volume01\Hyper-V\VM1\Virtual Hard Disks\VM1.vhdx" -MemoryStartupBytes 2GB  |Set-VM -ProcessorCount 4 -DynamicMemory 
@@ -15,7 +14,9 @@ Remove-VM -VMName "TestVM"
 
 
 $SwName = "MS-MSLab"
+$Sw2Name = "MS-Private"
 New-VMSwitch -SwitchName $SwName -SwitchType Internal
+New-VMSwitch -SwitchName $Sw2Name -SwitchType Private
 $SWNetAdp = Get-NetAdapter |where name -Match "MS-MSLab"
 New-NetIPAddress -IPAddress 192.168.0.1 -PrefixLength 24 -InterfaceIndex $SWNetAdp.ifIndex
 New-NetNat -Name MyNATnetwork -InternalIPInterfaceAddressPrefix 192.168.0.0/24
@@ -27,11 +28,13 @@ for ($i = 10; $i -le 14; $i++)
   Enable-VMIntegrationService -VMName "VM-$i" -Name "Guest Service Interface"
   Get-VMNetworkAdapter -VMName "VM-$i" |Remove-VMNetworkAdapter
   Set-VMFirmware -VMName "VM-$i" -EnableSecureBoot Off
-  Add-VMNetworkAdapter -SwitchName "MS-MSLab" -VMName "VM-$i"
+  #setup VMs with SW or SW2
+  Add-VMNetworkAdapter -SwitchName $Sw2Name -VMName "VM-$i"
   Start-VM -VMName "VM-$i"
 }
 
-$vmlist=get-vm |where name -Match 'VM-'
+
+#region configureation 1
 for ($i = 10; $i -le 14; $i++)
 { 
 
@@ -41,16 +44,56 @@ New-NetIPAddress -IPAddress "192.168.0.$($Using:i)" -DefaultGateway '192.168.0.1
 Set-DnsClientServerAddress -InterfaceIndex $if.InterfaceIndex -ServerAddresses '192.168.10.1'
 Enable-NetFirewallRule -Name "FPS-ICMP4-ERQ-In"
 
-#Join to the domain and rename
-Add-Computer -DomainName contoso.com -Credential $Using:Credential 
 Rename-Computer -NewName "VM-$($Using:i)" -Restart
 
 } -VMName "VM-$i" -Credential $Credential
 }
+#endregion
 
-$User = "Administrator"
+#region configureation 2
+for ($i = 10; $i -le 14; $i++)
+{ 
+
+ Invoke-Command -ScriptBlock {
+$if=Get-NetIPAddress -AddressFamily IPv4 |select InterfaceAlias,InterfaceIndex,IPAddress |where InterfaceAlias -Match ethernet
+New-NetIPAddress -IPAddress "192.168.20.$($Using:i)" -InterfaceIndex $if.InterfaceIndex -PrefixLength 24 
+Set-DnsClientServerAddress -InterfaceIndex $if.InterfaceIndex -ServerAddresses '192.168.20.14'
+Enable-NetFirewallRule -Name "FPS-ICMP4-ERQ-In"
+
+Rename-Computer -NewName "VM-$($Using:i)" -Restart
+
+} -VMName "VM-$i" -Credential $Credential
+}
+#endregion
+
+$WinFtr = Get-WindowsFeature -Name "*AD-Domain-Services*"
+ Invoke-Command -ScriptBlock {
+
+ Add-WindowsFeature -Name $using:WinFtr 
+ 
+Install-ADDSDomainController -CreateDnsDelegation:$false -DatabasePath 'C:\Windows\NTDS' -DomainName 'mstest.com' -InstallDns:$true -LogPath 'C:\Windows\NTDS' -NoGlobalCatalog:$false -SiteName 'Fes' -SysvolPath 'C:\Windows\SYSVOL' -NoRebootOnCompletion:$true -Force:$true -Credential $Credential
+
+
+} -VMName "VM-14" -Credential $Credential
+
+for ($i = 10; $i -le 14; $i++)
+{ 
+
+Invoke-Command -ScriptBlock {
+
+#Join to the domain "contoso.com / mstest.com"
+
+Add-Computer -DomainName mstest.com -Credential $Using:Credential 
+
+} -VMName "VM-$i" -Credential $Credential
+}
+
+
+$User = "Contoso\Administrator"
 $PWord = ConvertTo-SecureString -String "Passw0rd!" -AsPlainText -Force
 $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $User, $PWord
+
+
 
 
 
@@ -94,8 +137,6 @@ Add-VMHardDiskDrive -VMName "" -Path ""
 
 Get-NetIPConfiguration -computerName SRV02
 
-Add-WindowsFeature AD-Domain-Services 
-Install-ADDSDomainController -CreateDnsDelegation:$false -DatabasePath 'C:\Windows\NTDS' -DomainName 'contoso.com' -InstallDns:$true -LogPath 'C:\Windows\NTDS' -NoGlobalCatalog:$false -SiteName 'Fes' -SysvolPath 'C:\Windows\SYSVOL' -NoRebootOnCompletion:$true -Force:$true -Credential $DomainCred
 
 #remote Desktop
 mstsc /v:10.10.10.10:3389
@@ -125,6 +166,5 @@ foreach ($node in $nodes)
 Invoke-Command -ScriptBlock {
 $NewName = 'ISCSI2'
 Add-Computer -DomainName contoso.com -Credential $DomainCred -NewName $NewName -ComputerName vm-1 -Restart } -ComputerName '' -Credential $DomainCred
-
 
 
