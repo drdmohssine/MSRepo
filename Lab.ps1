@@ -1,4 +1,4 @@
-﻿
+
 #sdn02
 Set-WinUserLanguageList -LanguageList en-us,fr-fr -Force
 New-VM -Name "TestVM" -Generation 2 -VHDPath "C:\ClusterStorage\Volume01\Hyper-V\VM1\Virtual Hard Disks\VM1.vhdx" -MemoryStartupBytes 2GB  |Set-VM -ProcessorCount 4 -DynamicMemory 
@@ -25,7 +25,7 @@ for ($i = 10; $i -le 14; $i++)
   New-VHD -Path "C:\ClusterStorage\Volume01\Hyper-V\ChildVhd\ChildVM$i.vhdx" -ParentPath "C:\ClusterStorage\Volume01\Hyper-V\VM1\Virtual Hard Disks\VM1.vhdx"
   New-VM -Name "VM-$i" -Generation 2 -VHDPath "C:\ClusterStorage\Volume01\Hyper-V\ChildVhd\ChildVM$i.vhdx" -MemoryStartupBytes 2GB |Set-VM -ProcessorCount 4 -DynamicMemory
   Enable-VMIntegrationService -VMName "VM-$i" -Name "Guest Service Interface"
-  Get-VMNetworkAdapter |Remove-VMNetworkAdapter
+  Get-VMNetworkAdapter -VMName "VM-$i" |Remove-VMNetworkAdapter
   Set-VMFirmware -VMName "VM-$i" -EnableSecureBoot Off
   Add-VMNetworkAdapter -SwitchName "MS-MSLab" -VMName "VM-$i"
   Start-VM -VMName "VM-$i"
