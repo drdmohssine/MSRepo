@@ -1,4 +1,10 @@
 #sdn02
+$DesktopPath = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop)
+Start-BitsTransfer -Source 'https://raw.githubusercontent.com/drdmohssine/MSRepo/master/Autounattend.xml' -Destination "$DesktopPath\Autounattend.xml"
+Start-BitsTransfer -Source 'https://raw.githubusercontent.com/drdmohssine/MSRepo/master/Unattend.xml' -Destination "$DesktopPath\Unattend.xml"
+Start-BitsTransfer -Source 'https://raw.githubusercontent.com/drdmohssine/MSRepo/master/Lab.ps1' -Destination "$DesktopPath\Lab.ps1"
+
+
 Set-WinUserLanguageList -LanguageList en-us,fr-fr -Force
 New-VM -Name "TestVM" -Generation 2 -VHDPath "C:\ClusterStorage\Volume01\Hyper-V\VM1\Virtual Hard Disks\VM1.vhdx" -MemoryStartupBytes 2GB  |Set-VM -ProcessorCount 4 -DynamicMemory 
 Set-VMFirmware -VMName "TestVM" -EnableSecureBoot Off
